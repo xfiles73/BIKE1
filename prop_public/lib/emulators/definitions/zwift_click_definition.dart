@@ -26,6 +26,7 @@ class ZwiftClickDefinition extends ProxyBikeDefinition {
     required this.vendorMessage,
     required super.device,
     required super.data,
+    String? unlockKeyPrefix, // accepted for API compatibility; unused by stub
   });
 
   @override
