@@ -1515,7 +1515,7 @@ packages:
   prop:
     dependency: "direct main"
     description:
-      path: prop
+      path: prop_public
       relative: true
     source: path
     version: "0.0.1"
