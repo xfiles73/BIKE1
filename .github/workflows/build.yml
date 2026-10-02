@@ -5,7 +5,6 @@ on:
     branches: [main]
     tags: ["v*"]
   workflow_dispatch:
-    inputs: {}
 
 env:
   SHOREBIRD_TOKEN: ${{ secrets.SHOREBIRD_TOKEN }}
@@ -27,10 +26,9 @@ jobs:
     steps:
       #1 Checkout Repository
       - name: Checkout Repository
-        uses: actions/checkout@v3
-        with:
-          submodules: recursive
-          token: ${{ secrets.PAT_TOKEN }}
+        uses: actions/checkout@v4
+        # NB: niente `submodules: recursive` — il submodule privato `prop` non
+        # serve: pubspec/lock puntano alla cartella vendorizzata prop_public.
 
       - name: Rename pubspec_overrides_ci.yaml to pubspec_overrides.yaml
         uses: ./.github/actions/rename-pubspec-overrides
@@ -244,9 +242,9 @@ jobs:
     steps:
       #1 Checkout Repository
       - name: Checkout Repository
-        uses: actions/checkout@v3
-        with:
-          submodules: recursive
+        uses: actions/checkout@v4
+        # NB: no `submodules: recursive` — the only submodule (prop, SSH URL)
+        # is unused on Windows; pubspec points at the vendored prop_public dir.
 
       - name: Configure Microsoft Store CLI
         if: false
