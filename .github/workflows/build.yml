@@ -25,19 +25,52 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      #2 Sicurezza in piu': forza l'override locale del pacchetto `prop`.
-      # Anche se pubspec.yaml/lock sul repo fossero obsoleti, la risoluzione
-      # delle dipendenze usa comunque prop_public ed evita l'errore
-      # "could not find package prop at prop".
-      - name: Force local path override for prop
+      #2 Override completi e ALLINEATI (prop -> prop_public, universal_ble -> main).
+      # Il file viene SOVRASCITTO (non aggiunto): cosi' anche se su GitHub il
+      # pubspec_overrides.yaml committato fosse obsoleto (ref: changes), qui si
+      # azzera ogni disallineamento tra app e prop. Se prop_public non esiste,
+      # NON crea il file per non rompere setup alternativi.
+      - name: Force aligned overrides (prop + universal_ble)
         shell: pwsh
         run: |
-          Set-Content -Path pubspec_overrides.yaml -Value @"
+          if (-not (Test-Path "prop_public/pubspec.yaml")) {
+            Write-Warning "prop_public non trovata: nessun override generato."
+            exit 0
+          }
+          @"
           dependency_overrides:
             prop:
               path: prop_public
-          "@
+            universal_ble:
+              git:
+                url: https://github.com/jonasbark/universal_ble.git
+                ref: main
+          "@ | Set-Content -Path pubspec_overrides.yaml -Encoding utf8
+          Write-Output "--- pubspec_overrides.yaml ---"
           Get-Content pubspec_overrides.yaml
+
+      #2b Pulizia di eventuali residui del vecchio submodule privato `prop`:
+      # impedisce l'errore "because every version of prop from path depends on
+      # universal_ble ... at changes and bike_control depends on ... at main,
+      # prop from path is forbidden" causato da ref diverse nella stessa riga
+      # di dipendenza git.
+      - name: Remove stale private prop checkout
+        shell: bash
+        run: |
+          rm -rf prop .git/modules/prop || true
+          git config --file .gitmodules --remove-section submodule.prop 2>/dev/null || true
+          ls -d prop 2>/dev/null && echo "ATTENZIONE: cartella prop ancora presente" || echo "OK: nessun checkout 'prop' residuo"
+
+      # Cache delle dipendenze pub: velocizza i run successivi e riduce il traffico di download.
+      - name: Cache Pub dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            C:\Users\runneradmin\AppData\Local\Pub\Cache\hosted
+            .dart_tool
+          key: ${{ runner.os }}-pub-${{ hashFiles('pubspec.lock', 'pubspec_overrides.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pub-
 
       - name: Set Up Flutter
         uses: subosito/flutter-action@v2
