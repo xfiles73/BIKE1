@@ -18,7 +18,7 @@ dependencies:
   universal_ble:
     git:
       url: https://github.com/jonasbark/universal_ble.git
-      ref: changes
+      ref: main
   gamepads: ^0.1.10+1
 
   lottie: ^3.3.2
